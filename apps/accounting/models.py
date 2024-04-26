@@ -15,7 +15,7 @@ class Wallet(models.Model):
         ordering = ('id',)
 
     @transaction.atomic()
-    def transact(self, amount: decimal.Decimal, txid: str) -> None:
+    def transact(self, amount: decimal.Decimal, txid: str) -> "Transaction":
         self.balance = F("balance") + amount
         self.save(update_fields=["balance"])
         return Transaction.objects.create(wallet_id=self.pk, txid=txid, amount=amount)

@@ -119,3 +119,19 @@ class TestWallet:
         result = api_client.get(reverse("accounting:wallet-detail", kwargs={"pk": data['id']}))
         data = result.json()['data']
         assert Decimal(data['attributes']['balance']) == wallet.balance
+
+    def test_transactions_wrong_wallet_id(self, api_client: APIClient):
+        payload = {
+            "data": {
+                "type": "Transaction",
+                "attributes": {
+                    "txid": self.TRANSACTION_1_TXID,
+                    "amount": self.TRANSACTION_1_AMOUNT,
+                }
+            }
+        }
+        result = api_client.post(
+            reverse("accounting:wallet-transaction-list", kwargs={"wallet_pk": 999}),
+            data=payload)
+
+        assert result.status_code == 404
