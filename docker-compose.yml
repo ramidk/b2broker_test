@@ -1,0 +1,59 @@
+services:
+  web:
+    container_name: b2broker_web
+    image: b2broker
+    depends_on:
+      db:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    env_file:
+      - ./.env
+    command: web
+    ports:
+      - "${WEB_PORT}:8000"
+
+    profiles: ["main"]
+
+  db:
+    image: mysql
+    container_name: b2broker_db
+    restart: always
+    volumes:
+      - db_data:/var/lib/mysql
+    env_file:
+      - ./.env
+
+    healthcheck:
+      test: ["CMD", 'mysqladmin', 'ping', '-h', '127.0.0.1', '-u', '$$MYSQL_PASSWORD', '-p$$MYSQL_USER' ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    environment:
+      MYSQL_DATABASE: $DB_NAME
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_USER: $DB_USER
+      MYSQL_PASSWORD: $DB_USER_PASSWORD
+
+    profiles: ["tests", "main"]
+
+  tests:
+    container_name: b2broker_tests
+    depends_on:
+      db:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    env_file:
+      - ./.env
+    command: pytest
+    restart: "no"
+    ports: []
+    profiles: ["tests"]
+
+
+volumes:
+  db_data:
